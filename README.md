@@ -17,8 +17,8 @@ A full-stack web application that solves a unique and challenging variation of t
 
 ## 🛠️ Tech Stack & Core Algorithms
 
-* **Frontend:** React.js, JavaScript, HTML/CSS
-* **Backend:** C++
+* **Frontend:** React.js, Typescript, HTML/CSS
+* **Backend:** C++ , Javascript
 * **Core Algorithms:**
     * Recursive Backtracking
     * Breadth-First Search (BFS) Floodfill
