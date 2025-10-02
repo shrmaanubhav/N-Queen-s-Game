@@ -1,0 +1,46 @@
+# =======================================================
+# Root .gitignore for the entire project
+# =======================================================
+
+# General Logs (apply to the whole project)
+# -------------------------------------------------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor & System Files (apply to the whole project)
+# -------------------------------------------------------
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# VS Code specific
+.vscode/*
+# But DO commit the extensions file to recommend extensions to collaborators
+!.vscode/extensions.json
+
+# Frontend-specific files
+# (Rules from the original frontend/.gitignore, now prefixed)
+# -------------------------------------------------------
+/frontend/node_modules
+/frontend/dist
+/frontend/dist-ssr
+/frontend/*.local
+
+# General dependency and environment files (good practice)
+# -------------------------------------------------------
+# A general node_modules rule is good to have
+/node_modules
+
+# Ignore all .env files for security
+.env
+.env.*
+!.env.example
