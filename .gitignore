@@ -48,3 +48,11 @@ lerna-debug.log*
 # Backend C++ compiled executables
 /backend/generate_board
 /backend/validate_solution
+
+# Server-specific
+/server/node_modules
+/server/*.log
+
+# React alternate build folder
+/frontend/build
+
