@@ -11,7 +11,7 @@ async function fetchApi(url, options = {}) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData.error || `Server responded with status: ${response.status}`
+        errorData.error || `Server responded with status: ${response.status}`,
       );
     }
     return await response.json();
@@ -169,6 +169,7 @@ function NQueensBoard() {
   const [validatingMove, setValidatingMove] = useState(false);
   const [error, setError] = useState(null);
   const [isGameComplete, setIsGameComplete] = useState(false);
+  const [isActuallyWon, setIsActuallyWon] = useState(false); // Only true if user solved it themselves
   const [winMessage, setWinMessage] = useState("Congratulations!"); // For custom win/reveal message
 
   const colors = useMemo(() => {
@@ -190,7 +191,7 @@ function NQueensBoard() {
           !Array.isArray(config.board)
         ) {
           throw new Error(
-            "Invalid board data from server. Expected 'size', 'board', and 'color' fields."
+            "Invalid board data from server. Expected 'size', 'board', and 'color' fields.",
           );
         }
 
@@ -208,10 +209,11 @@ function NQueensBoard() {
         setBoardConfig({ size: config.size, colorCodes: config.color });
         setQueens([]);
         setIsGameComplete(false);
+        setIsActuallyWon(false);
         setWinMessage("Congratulations!");
       } catch (err) {
         setError(
-          err.message || "Failed to load game from server. Please try again."
+          err.message || "Failed to load game from server. Please try again.",
         );
         console.error("Failed to initialize game:", err);
       } finally {
@@ -224,10 +226,14 @@ function NQueensBoard() {
   useEffect(() => {
     if (boardConfig && queens.length === boardConfig.size) {
       setIsGameComplete(true);
+      // Only mark as won if it hasn't been revealed
+      if (winMessage === "Congratulations!") {
+        setIsActuallyWon(true);
+      }
     } else {
       setIsGameComplete(false);
     }
-  }, [queens, boardConfig]);
+  }, [queens, boardConfig, winMessage]);
 
   const flashCells = (cells) => {
     setFlashingCells(cells);
@@ -235,15 +241,15 @@ function NQueensBoard() {
   };
 
   const handleCellClick = async (row, col) => {
-    if (!boardConfig || validatingMove || isGameComplete) return;
+    if (!boardConfig || validatingMove || isActuallyWon) return;
 
     const existingQueenIndex = queens.findIndex(
-      (q) => q.row === row && q.col === col
+      (q) => q.row === row && q.col === col,
     );
 
     if (existingQueenIndex !== -1) {
       const newQueens = queens.filter(
-        (_, index) => index !== existingQueenIndex
+        (_, index) => index !== existingQueenIndex,
       );
       setQueens(newQueens);
       return;
@@ -256,7 +262,7 @@ function NQueensBoard() {
       const validation = await validateQueenPlacement(
         queens,
         newQueen,
-        boardConfig
+        boardConfig,
       );
 
       if (validation.valid) {
@@ -264,6 +270,7 @@ function NQueensBoard() {
         setQueens(newQueens);
         if (newQueens.length === boardConfig.size) {
           setWinMessage("Congratulations! You solved it!");
+          setIsActuallyWon(true);
         }
       } else {
         if (validation.conflictingPositions) {
@@ -293,7 +300,7 @@ function NQueensBoard() {
   const getRemainingRegions = () => {
     if (!boardConfig) return [];
     const usedRegions = new Set(
-      queens.map((queen) => boardConfig.colorCodes[queen.row][queen.col])
+      queens.map((queen) => boardConfig.colorCodes[queen.row][queen.col]),
     );
     return colors.filter((color) => !usedRegions.has(color.code));
   };
@@ -303,6 +310,7 @@ function NQueensBoard() {
     setFlashingCells([]);
     setError(null);
     setIsGameComplete(false);
+    setIsActuallyWon(false);
     setWinMessage("Congratulations!");
   };
 
@@ -340,66 +348,79 @@ function NQueensBoard() {
     );
   }
 
-  return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
-            {boardConfig.size}×{boardConfig.size} Queens Placement
-          </CardTitle>
-          <p className="text-sm text-center text-gray-500">
-            {boardConfig.size} colors for {boardConfig.size}×{boardConfig.size}{" "}
-            board
-          </p>
-          <div className="flex items-center justify-center gap-4 mt-4">
+return (
+  <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+    {/* Page Header */}
+    <div className="max-w-6xl mx-auto px-6 pt-10 pb-6 text-center">
+      <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
+        🎯 N-Queens Challenge
+      </h1>
+      <p className="mt-3 text-gray-600 text-lg">
+        Place <span className="font-semibold">{boardConfig.size}</span> queens
+        without attacking each other — and only one queen per color region.
+      </p>
+    </div>
+
+    {/* Main Game Card */}
+    <div className="max-w-6xl mx-auto px-6 pb-12">
+      <div className="rounded-3xl shadow-2xl bg-white/80 backdrop-blur-xl border border-white/40">
+        <div className="p-8">
+          {/* Controls */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
             <Button
               onClick={resetBoard}
               variant="outline"
               disabled={validatingMove}
             >
-              Reset
+              Reset Board
             </Button>
+
             <Button
               onClick={revealSolution}
               variant="outline"
               disabled={validatingMove}
             >
-              Reveal Solution
+              Reveal Answer
             </Button>
+
             <Button
               onClick={getNewBoard}
               variant="outline"
               disabled={validatingMove}
             >
-              New Board
+              New Puzzle
             </Button>
+
             {validatingMove && (
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Validating move...
+                Checking move...
               </div>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1 relative">
-              {isGameComplete && (
-                <div className="absolute inset-0 bg-white bg-opacity-0 flex flex-col items-center justify-center rounded-md z-10">
-                  <h2 className="text-3xl font-bold text-black mb-4">
+
+          {/* Layout */}
+          <div className="flex flex-col lg:flex-row gap-10">
+            {/* Board Section */}
+            <div className="flex-1 flex flex-col items-center relative">
+              {isActuallyWon && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 rounded-2xl z-20">
+                  <h2 className="text-4xl font-extrabold text-green-600 mb-3">
                     {winMessage}
                   </h2>
-                  <p className="text-black mb-6">
-                    You can start a new game or reset the board.
+                  <p className="text-gray-600 mb-6">
+                    Puzzle complete. Try another one!
                   </p>
                   <Button onClick={getNewBoard}>Play Again</Button>
                 </div>
               )}
+
+              {/* Board Grid */}
               <div
                 className="grid gap-1 mx-auto"
                 style={{
-                  gridTemplateColumns: `repeat(${boardConfig.size}, 1fr)`,
-                  maxWidth: "500px",
+                  gridTemplateColumns: `repeat(${boardConfig.size}, minmax(50px, 1fr))`,
+                  maxWidth: `${Math.min(boardConfig.size * 60, 600)}px`,
                 }}
               >
                 {Array.from(
@@ -407,9 +428,11 @@ function NQueensBoard() {
                   (_, i) => {
                     const row = Math.floor(i / boardConfig.size);
                     const col = i % boardConfig.size;
+
                     const hasQueen = queens.some(
                       (q) => q.row === row && q.col === col
                     );
+
                     const colorCode = boardConfig.colorCodes[row][col];
                     const color = colors[colorCode] || colors[0];
                     const flashing = isFlashing(row, col);
@@ -417,139 +440,96 @@ function NQueensBoard() {
                     return (
                       <div
                         key={`${row}-${col}`}
+                        onClick={() => handleCellClick(row, col)}
                         className={`
-                        aspect-square flex items-center justify-center text-3xl font-bold cursor-pointer
-                        border-2 transition-all duration-200 select-none rounded-md
-                        ${
-                          flashing
-                            ? "border-red-500 bg-red-200 animate-pulse"
-                            : "border-gray-300 hover:border-blue-400"
-                        }
-                        ${
-                          validatingMove || isGameComplete
-                            ? "cursor-wait opacity-75"
-                            : "hover:scale-105"
-                        }
-                      `}
+                          aspect-square flex items-center justify-center
+                          text-2xl sm:text-3xl font-bold cursor-pointer
+                          border-2 transition-all duration-200 select-none rounded-md
+                          min-w-12 min-h-12
+                          ${
+                            flashing
+                              ? "border-red-500 bg-red-200 animate-pulse"
+                              : "border-gray-300 hover:border-blue-400"
+                          }
+                          ${
+                            validatingMove || isActuallyWon
+                              ? "cursor-wait opacity-75"
+                              : "hover:scale-105"
+                          }
+                        `}
                         style={{
                           backgroundColor: flashing
                             ? undefined
                             : `${color.value}20`,
-                          color: hasQueen ? "#000" : "transparent",
                         }}
-                        onClick={() => handleCellClick(row, col)}
-                        onMouseEnter={() =>
-                          !validatingMove && setHoveredCell({ row, col })
-                        }
-                        onMouseLeave={() => setHoveredCell(null)}
                       >
-                        {hasQueen && "♛"}
+                        {hasQueen && <span className="drop-shadow-md text-black">♛</span>}
                       </div>
                     );
                   }
                 )}
               </div>
             </div>
-            <div className="w-full md:w-64 space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">
-                    Color Regions ({colors.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 max-h-48 overflow-y-auto">
+
+            {/* Sidebar */}
+            <div className="w-full lg:w-80 space-y-5">
+              {/* Regions */}
+              <div className="rounded-2xl bg-white shadow-lg p-5 border">
+                <h3 className="font-bold text-gray-800 mb-3">
+                  🎨 Color Regions
+                </h3>
+                <div className="space-y-2 max-h-44 overflow-y-auto">
                   {colors.map((color) => (
-                    <div key={color.code} className="flex items-center gap-2">
+                    <div key={color.code} className="flex items-center gap-3">
                       <div
-                        className="w-4 h-4 rounded border flex-shrink-0"
+                        className="w-5 h-5 rounded-md border"
                         style={{ backgroundColor: color.value }}
                       />
-                      <span className="text-sm truncate">{color.name}</span>
+                      <span className="text-sm font-medium">{color.name}</span>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">
-                    Queen Positions ({queens.length}/{boardConfig.size})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="max-h-48 overflow-y-auto">
-                  {queens.length === 0 ? (
-                    <p className="text-sm text-gray-500">No queens placed</p>
-                  ) : (
-                    <div className="space-y-1">
-                      {queens.map((queen, index) => {
-                        const colorCode =
-                          boardConfig.colorCodes[queen.row][queen.col];
-                        const color = colors[colorCode] || colors[0];
-                        return (
-                          <div key={index} className="text-sm">
-                            Row {queen.row + 1}, Col {queen.col + 1}
-                            <Badge
-                              variant="outline"
-                              className="ml-2"
-                              style={{
-                                backgroundColor: `${color.value}20`,
-                                borderColor: color.value,
-                              }}
-                            >
-                              {color.name}
-                            </Badge>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">
-                    Available Regions ({getRemainingRegions().length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {getRemainingRegions().length === 0 ? (
-                    <p className="text-sm text-gray-500">
-                      All regions occupied
-                    </p>
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {getRemainingRegions().map((color) => (
-                        <Badge
-                          key={color.code}
-                          variant="outline"
-                          style={{
-                            backgroundColor: `${color.value}20`,
-                            borderColor: color.value,
-                          }}
-                        >
-                          {color.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Rules</CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs space-y-1 text-gray-600">
-                  <p>• No queen attacks another (row, column, or diagonal).</p>
-                  <p>• No two queens can be in the same color region.</p>
-                  <p>• Click a cell to place or remove a queen.</p>
-                  <p>• Goal: Place {boardConfig.size} queens successfully.</p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+
+              {/* Queen Positions */}
+              <div className="rounded-2xl bg-white shadow-lg p-5 border">
+                <h3 className="font-bold text-gray-800 mb-3">
+                  ♛ Queens Placed ({queens.length}/{boardConfig.size})
+                </h3>
+
+                {queens.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    No queens placed yet.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {queens.map((q, idx) => (
+                      <div key={idx} className="text-sm">
+                        Row {q.row + 1}, Col {q.col + 1}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Rules */}
+              <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-lg p-5">
+                <h3 className="font-bold mb-3">📌 Rules</h3>
+                <ul className="text-sm space-y-2 opacity-90">
+                  <li>• No queen attacks another.</li>
+                  <li>• Only one queen per color region.</li>
+                  <li>• Click again to remove a queen.</li>
+                  <li>• Place {boardConfig.size} queens to win.</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
-  );
+  </div>
+);
+
 }
 
 export default function App() {
