@@ -44,3 +44,7 @@ lerna-debug.log*
 .env
 .env.*
 !.env.example
+
+# Backend C++ compiled executables
+/backend/generate_board
+/backend/validate_solution
