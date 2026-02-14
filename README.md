@@ -94,6 +94,12 @@ You will need two separate terminal windows running simultaneously.
     ```
     This will open the application in your browser at [http://localhost:3000](http://localhost:3000).
 
+## Live Deployment
+
+Frontend: https://n-queens-frontend.vercel.app  
+Backend: https://n-queens-backend.onrender.com  
+
+
 ## 📄 License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
