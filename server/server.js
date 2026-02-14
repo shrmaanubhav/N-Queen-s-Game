@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const port = 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -12,6 +11,8 @@ const validateBoardAPI = require("./validate_board_api");
 app.post("/api/generate", generateBoardAPI);
 app.post("/api/validate", validateBoardAPI);
 
+const port = process.env.PORT || 5000;
+
 app.listen(port, () => {
-  console.log(`Backend server running on http://localhost:${port}`);
+  console.log(`Backend server running on port ${port}`);
 });

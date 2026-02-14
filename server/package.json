@@ -1,6 +1,13 @@
 {
+  "name": "nqueen-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "build": "g++ ../backend/generate_board.cpp -o ../backend/generate_board && g++ ../backend/validate_solution.cpp -o ../backend/validate_solution",
+    "start": "node server.js"
+  },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^4.18.2"
   }
 }
